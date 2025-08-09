@@ -39,73 +39,90 @@
     </div>
 
     <script>
-      let tasks = [];
-
       const taskForm = document.getElementById("taskForm");
       const taskInput = document.getElementById("taskInput");
       const taskList = document.getElementById("taskList");
 
-      // Add new task
+      const API_URL = "../backend/api.php"; // Path to backend
+
+      // Load tasks from backend
+      function loadTasks() {
+        fetch(API_URL)
+          .then((res) => res.json())
+          .then((tasks) => {
+            taskList.innerHTML = "";
+
+            tasks.forEach((task) => {
+              const li = document.createElement("li");
+              li.className =
+                "list-group-item d-flex justify-content-between align-items-center";
+
+              const taskSpan = document.createElement("span");
+              taskSpan.textContent = task.task;
+              if (task.completed == 1) {
+                taskSpan.classList.add("completed");
+              }
+
+              const btnGroup = document.createElement("div");
+
+              const doneBtn = document.createElement("button");
+              doneBtn.className = "btn btn-sm btn-success me-1";
+              doneBtn.innerText = "✓";
+              doneBtn.addEventListener("click", () =>
+                toggleTask(task.id, task.completed == 1 ? 0 : 1)
+              );
+
+              const deleteBtn = document.createElement("button");
+              deleteBtn.className = "btn btn-sm btn-danger";
+              deleteBtn.innerText = "Delete";
+              deleteBtn.addEventListener("click", () => deleteTask(task.id));
+
+              btnGroup.appendChild(doneBtn);
+              btnGroup.appendChild(deleteBtn);
+
+              li.appendChild(taskSpan);
+              li.appendChild(btnGroup);
+              taskList.appendChild(li);
+            });
+          });
+      }
+
+      // Add task
       taskForm.addEventListener("submit", function (event) {
         event.preventDefault();
         const taskText = taskInput.value.trim();
 
         if (taskText !== "") {
-          tasks.push({ title: taskText, status: 0 });
-          taskInput.value = "";
-          renderTasks();
+          fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task: taskText }),
+          }).then(() => {
+            taskInput.value = "";
+            loadTasks();
+          });
         }
       });
 
-      // Show tasks
-      function renderTasks() {
-        taskList.innerHTML = "";
-
-        tasks.forEach((task, index) => {
-          const li = document.createElement("li");
-          li.className =
-            "list-group-item d-flex justify-content-between align-items-center";
-
-          const taskSpan = document.createElement("span");
-          taskSpan.textContent = task.title;
-          if (task.status === 1) {
-            taskSpan.classList.add("completed");
-          }
-
-          const btnGroup = document.createElement("div");
-
-          const doneBtn = document.createElement("button");
-          doneBtn.className = "btn btn-sm btn-success me-1";
-          doneBtn.innerText = "✓";
-          doneBtn.addEventListener("click", () => toggleTask(index));
-
-          const deleteBtn = document.createElement("button");
-          deleteBtn.className = "btn btn-sm btn-danger";
-          deleteBtn.innerText = "Delete";
-          deleteBtn.addEventListener("click", () => deleteTask(index));
-
-          btnGroup.appendChild(doneBtn);
-          btnGroup.appendChild(deleteBtn);
-
-          li.appendChild(taskSpan);
-          li.appendChild(btnGroup);
-          taskList.appendChild(li);
-        });
-      }
-
-      // Mark task as done/undone
-      function toggleTask(index) {
-        tasks[index].status = tasks[index].status === 1 ? 0 : 1;
-        renderTasks();
+      // Toggle task
+      function toggleTask(id, completed) {
+        fetch(API_URL, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, completed }),
+        }).then(() => loadTasks());
       }
 
       // Delete task
-      function deleteTask(index) {
-        tasks.splice(index, 1);
-        renderTasks();
+      function deleteTask(id) {
+        fetch(API_URL, {
+          method: "DELETE",
+          body: "id=" + id,
+        }).then(() => loadTasks());
       }
 
-      renderTasks();
+      // Load tasks on page start
+      window.onload = loadTasks;
     </script>
   </body>
 </html>

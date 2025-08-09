@@ -1,13 +1,12 @@
 <?php
-$db = new SQLite3('todo.db');
+require_once 'db.php';
 
-// Create the tasks table
+$db = new Database();
 $db->exec("CREATE TABLE IF NOT EXISTS tasks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT,
-  status INTEGER DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0
 )");
 
-echo "Database and table created.";
+echo "Database ready.";
 ?>
